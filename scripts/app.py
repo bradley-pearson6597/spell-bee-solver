@@ -26,6 +26,7 @@ def spell_bee_solver(no_centre, centre):
     return(final_word_df)
 
 def get_todays_answers():
+    url = 'https://spellbee.org/'
     with HTMLSession() as session:
         page = session.get(url)
         valid_words = page.html.render(script = 'game.validWords')
