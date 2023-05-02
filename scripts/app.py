@@ -1,10 +1,8 @@
 import gradio as gr
 import pandas as pd
-import os
+from requests_html import HTMLSession
 
-cwd = os.getcwd()
-
-english_dict = pd.read_csv(f"{cwd}/Documents/spell-bee-solver/data/dictionary.txt",
+english_dict = pd.read_csv("dictionary.txt",
                          header = None, 
                          sep = ' ', 
                         names = ['word'])
@@ -27,14 +25,29 @@ def spell_bee_solver(no_centre, centre):
     final_word_df = final_word_df.sort_values('word_length', ascending = False)
     return(final_word_df)
 
+def get_todays_answers():
+    with HTMLSession() as session:
+        page = session.get(url)
+        valid_words = page.html.render(script = 'game.validWords')
+
+    final_word_df = pd.DataFrame(valid_words, columns = ['word'])
+    final_word_df['word_length'] = final_word_df['word'].str.len()
+    final_word_df = final_word_df[final_word_df['word_length'] > 3]
+    final_word_df = final_word_df.sort_values('word_length', ascending = False)
+    return(final_word_df)
+
+    
+
 with gr.Blocks() as app:
     with gr.Row():
         no_centre = gr.Textbox(label = 'Letters Outside of Centre')
         centre = gr.Textbox(label = 'Centre Letter')
     with gr.Row():
         solve_button = gr.Button(value = 'Solve')
+        get_today_answers = gr.Button(value = "Get Today's answers")
     with gr.Row():
-        output_df = gr.DataFrame()
+        output_df = gr.DataFrame(headers = ['word', 'word_length'])
     solve_button.click(spell_bee_solver, inputs = [no_centre, centre], outputs = [output_df])
+    get_today_answers.click(get_todays_answers, inputs = None, outputs = [output_df])
 
 app.launch(debug = True, share = False)
