@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import re
 import json
+from datetime import date
 
 english_dict = pd.read_csv("dictionary.txt",
                          header = None, 
@@ -30,11 +31,14 @@ def spell_bee_solver(no_centre, centre):
     return(final_word_df)
 
 def get_spellbee_answers(x):
+    today = date.today().strftime("%Y-%m-%d")
+
     content = requests.get(url)._content
-    content = re.sub(".*window.game = ", "", str(content))
+    content = re.sub(".*window.games = ", "", str(content))
     content = re.sub("(.*?)\\;.*", "\\1", content)
     content = json.loads(content)
-    valid_words = content['data']['dictionary']
+    
+    valid_words = content[today]['data']['dictionary']
     final_word_df = pd.DataFrame(valid_words, columns = ['word'])
     final_word_df['word_length'] = final_word_df['word'].str.len()
     final_word_df = final_word_df[final_word_df['word_length'] > 3]
